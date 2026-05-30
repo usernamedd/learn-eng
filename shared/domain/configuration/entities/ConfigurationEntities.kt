@@ -1,12 +1,7 @@
-package shared.domain.entity
+package shared.domain.configuration.entities
 
 /**
- * 应用配置实体
- * @param targetLanguage 目标语言（默认 "en"）
- * @param llmProvider 当前 LLM 提供商
- * @param llmApiKeys 各提供商的 API Key
- * @param llmBaseUrls 自部署模型的地址
- * @param ttsProvider TTS 提供商
+ * 应用配置
  */
 data class AppConfig(
     val targetLanguage: String = "en",
@@ -17,12 +12,12 @@ data class AppConfig(
 )
 
 /**
- * 语言信息
+ * 语言选项
  */
 data class Language(
-    val code: String,    // "en", "ja", "ko"...
-    val name: String,    // "English", "日本語"...
-    val flag: String      // "🇺🇸", "🇯🇵"...
+    val code: String,
+    val name: String,
+    val flag: String
 ) {
     companion object {
         val SUPPORTED = listOf(

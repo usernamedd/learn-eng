@@ -1,11 +1,11 @@
 package shared.adapters.android
 
-import shared.domain.entity.AppConfig
-import shared.ports.outbound.ConfigRepository
+import shared.domain.configuration.entities.AppConfig
+import shared.domain.configuration.ports.outbound.ConfigRepository
 
 /**
- * Android 平台配置管理适配器
- * 使用 SharedPreferences 持久化配置
+ * Android 配置持久化适配器
+ * 实现 Configuration 上下文的 ConfigRepository
  */
 class AndroidConfigRepository : ConfigRepository {
 

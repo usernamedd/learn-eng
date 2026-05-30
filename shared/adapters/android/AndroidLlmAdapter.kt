@@ -1,22 +1,60 @@
 package shared.adapters.android
 
-import shared.domain.entity.ChatMessage
-import shared.domain.entity.ChatResponse
-import shared.domain.entity.TranslationResult
-import shared.ports.outbound.LlmGateway
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import shared.domain.conversation.entities.ChatMessage
+import shared.domain.conversation.entities.ChatResponse
+import shared.domain.conversation.ports.outbound.LlmChatGateway
+import shared.domain.translation.entities.TranslationResult
+import shared.domain.translation.ports.outbound.LlmGateway
 import java.util.UUID
 
 /**
  * Android LLM 适配器
- * 支持 OpenAI兼容 API（DeepSeek / GPT / Ollama / vLLM 等）
+ * 同时实现 Translation 上下文的 LlmGateway 和 Conversation 上下文的 LlmChatGateway
+ * 支持 OpenAI 兼容 API（DeepSeek / GPT / Ollama / vLLM 等）
  */
 class AndroidLlmAdapter(
     private val apiKey: String,
     private val baseUrl: String,
     override val provider: String
-) : LlmGateway {
+) : LlmGateway, LlmChatGateway {
 
-    private val json = com.google.gson.Gson()
+    private val json = Gson()
+
+    // ============== LlmGateway (Translation) ==============
+
+    override suspend fun translate(
+        text: String,
+        sourceLanguage: String,
+        targetLanguage: String
+    ): TranslationResult {
+        val prompt = "Translate the following text from $sourceLanguage to $targetLanguage. " +
+                "Only output the translation, no explanations.\n\n$text"
+
+        val body = mapOf(
+            "model" to getModelName(),
+            "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
+            "stream" to false
+        )
+
+        val response = sendRequest("/chat/completions", body)
+
+        val translated = response.getAsJsonArray("choices")
+            .first()?.asJsonObject
+            ?.getAsJsonObject("message")
+            ?.get("content")?.asString
+            ?: ""
+
+        return TranslationResult(
+            sourceText = text,
+            translatedText = translated.trim(),
+            sourceLanguage = sourceLanguage,
+            targetLanguage = targetLanguage
+        )
+    }
+
+    // ============== LlmChatGateway (Conversation) ==============
 
     override suspend fun chat(messages: List<ChatMessage>, systemPrompt: String?): ChatResponse {
         val allMessages = if (systemPrompt != null) {
@@ -58,50 +96,25 @@ class AndroidLlmAdapter(
         )
     }
 
-    override suspend fun translate(
-        text: String,
-        sourceLanguage: String,
-        targetLanguage: String
-    ): TranslationResult {
-        val prompt = "Translate the following text from $sourceLanguage to $targetLanguage. " +
-                "Only output the translation, no explanations.\n\n$text"
-
-        val body = mapOf(
-            "model" to getModelName(),
-            "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
-            "stream" to false
-        )
-
-        val response = sendRequest("/chat/completions", body)
-
-        val translated = response.getAsJsonArray("choices")
-            .first()?.asJsonObject
-            ?.getAsJsonObject("message")
-            ?.get("content")?.asString
-            ?: ""
-
-        return TranslationResult(
-            sourceText = text,
-            translatedText = translated.trim(),
-            sourceLanguage = sourceLanguage,
-            targetLanguage = targetLanguage
-        )
-    }
+    // ============== Common ==============
 
     private fun getModelName(): String = when (provider) {
         "deepseek" -> "deepseek-chat"
         "openai" -> "gpt-4"
         "ollama" -> "llama3"
+        "gemini" -> "gemini-pro"
         else -> "gpt-4"
     }
 
-    private fun sendRequest(endpoint: String, body: Map<String, Any?>): com.google.gson.JsonObject {
+    private fun sendRequest(endpoint: String, body: Map<String, Any?>): JsonObject {
         val url = java.net.URL("$baseUrl$endpoint")
         val conn = url.openConnection() as java.net.HttpURLConnection
         conn.requestMethod = "POST"
         conn.setRequestProperty("Content-Type", "application/json")
         conn.setRequestProperty("Authorization", "Bearer $apiKey")
         conn.doOutput = true
+        conn.connectTimeout = 30000
+        conn.readTimeout = 30000
 
         conn.outputStream.use { it.write(json.toJson(body).toByteArray()) }
 
@@ -113,7 +126,7 @@ class AndroidLlmAdapter(
 
         return json.fromJson(
             conn.inputStream.bufferedReader().readText(),
-            com.google.gson.JsonObject::class.java
+            JsonObject::class.java
         )
     }
 }
