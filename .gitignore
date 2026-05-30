@@ -1,0 +1,61 @@
+# Gradle
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+build/
+!.gitkeep
+
+# Android
+*.apk
+*.aab
+*.dex
+*.so
+.classpath
+.project
+.settings/
+local.properties
+*.log
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.xcuserdata
+*.moved-aside
+*.hmap
+*.ipa~
+*.xcuserstate
+Carthage/Build/
+Pods/
+*.xcworkspace
+!*.xcworkspacedata
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Node
+node_modules/
+npm-debug.log*
+*.log
+
+# Shared (compiled output)
+*.class
+*.pyc
+*.js
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Local config (should never commit)
+*/local.properties
+secrets.properties
+.env
