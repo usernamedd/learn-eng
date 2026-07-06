@@ -26,11 +26,17 @@ export default function Layout() {
       </header>
 
       <nav className="app-nav">
+        <NavLink to="/screenshot" className={navLinkClass}>
+          📸 截图学习
+        </NavLink>
         <NavLink to="/translate" className={navLinkClass}>
           🔤 翻译
         </NavLink>
         <NavLink to="/chat" className={navLinkClass}>
           💬 对话
+        </NavLink>
+        <NavLink to="/vocabulary" className={navLinkClass}>
+          📚 生词本
         </NavLink>
         <NavLink to="/settings" className={navLinkClass}>
           ⚙️ 设置
